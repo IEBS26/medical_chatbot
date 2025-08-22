@@ -251,6 +251,32 @@
         .typing-dot:nth-child(1) { animation-delay: -0.32s; }
         .typing-dot:nth-child(2) { animation-delay: -0.16s; }
 
+        .status-indicator {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: #374151;
+            z-index: 1000;
+        }
+
+        .status-indicator.healthy {
+            border-left: 4px solid #10b981;
+        }
+
+        .status-indicator.degraded {
+            border-left: 4px solid #f59e0b;
+        }
+
+        .status-indicator.error {
+            border-left: 4px solid #ef4444;
+        }
+
         @keyframes typing {
             0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
             40% { transform: scale(1); opacity: 1; }
@@ -279,27 +305,20 @@
         .error-message {
             background: #fee2e2;
             border: 1px solid #fecaca;
-            color: #310000;
+            color: #991b1b;
             padding: 12px;
             border-radius: 8px;
             margin: 10px 20px;
         }
 
-        .api-key-section {
-            background: #fffbeb;
-            border: 1px solid #fed7aa;
-            padding: 15px 20px;
-            margin: 20px;
-            border-radius: 10px;
-        }
-
-        .api-key-input {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #e5e7eb;
+        .fallback-notice {
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            color: #92400e;
+            padding: 10px 15px;
+            margin: 10px 20px;
             border-radius: 8px;
-            font-size: 1rem;
-            margin-top: 10px;
+            font-size: 0.9rem;
         }
 
         .streaming-text {
@@ -353,16 +372,6 @@
             margin-right: 5px;
         }
 
-        .fallback-notice {
-            background: #fef3c7;
-            border: 1px solid #fbbf24;
-            color: #92400e;
-            padding: 10px 15px;
-            margin: 10px 20px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-        }
-
         @media (max-width: 768px) {
             .input-row {
                 flex-direction: column;
@@ -381,10 +390,50 @@
                 margin-top: 10px;
                 display: inline-block;
             }
+
+            .status-indicator {
+                position: static;
+                margin: 10px auto;
+                display: block;
+                text-align: center;
+            }
+        }
+
+        .retry-button {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            margin-left: 10px;
+            min-width: 80px;
+            font-size: 0.9rem;
+            padding: 8px 16px;
+        }
+
+        .connection-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: none;
+        }
+
+        .connection-status.online {
+            border-left: 4px solid #10b981;
+            color: #065f46;
+        }
+
+        .connection-status.offline {
+            border-left: 4px solid #ef4444;
+            color: #991b1b;
         }
     </style>
 </head>
 <body>
+
     <div class="container">
         <div class="header">
            <div class="timer" id="timer">
@@ -443,7 +492,9 @@
         let streamingContent = ""; // Store complete content
         let queryStartTime = null;
         let timerInterval = null;
-        const BACKEND_URL = "http://localhost:8000"; // Change this to your backend URL
+
+        const BACKEND_URL = window.location.origin;
+        console.log('🔗 Backend URL:', BACKEND_URL); // Change this to your backend URL
 
         const jobDescriptions = {
             'CROW': 'Quick and concise responses for general queries',

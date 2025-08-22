@@ -1,11 +1,11 @@
 {
   "api_data": {
     "0": {
-      "usage_count": 1,
+      "usage_count": 5,
       "exhausted_at": null,
       "reset_at": null,
       "is_available": true,
-      "last_used": "2025-08-22T10:19:56.694538"
+      "last_used": "2025-08-22T13:02:06.256653"
     },
     "1": {
       "usage_count": 0,
@@ -76,9 +76,30 @@
       "reset_at": null,
       "is_available": true,
       "last_used": null
+    },
+    "11": {
+      "usage_count": 0,
+      "exhausted_at": null,
+      "reset_at": null,
+      "is_available": true,
+      "last_used": null
+    },
+    "12": {
+      "usage_count": 0,
+      "exhausted_at": null,
+      "reset_at": null,
+      "is_available": true,
+      "last_used": null
+    },
+    "13": {
+      "usage_count": 0,
+      "exhausted_at": null,
+      "reset_at": null,
+      "is_available": true,
+      "last_used": null
     }
   },
   "current_api_index": 0,
-  "last_updated": "2025-08-22T10:19:56.694538",
-  "total_api_keys": 11
+  "last_updated": "2025-08-22T13:02:06.256653",
+  "total_api_keys": 14
 }
