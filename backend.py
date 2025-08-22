@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, HTMLResponse
 from pydantic import BaseModel
@@ -11,6 +11,7 @@ import json
 import time
 import logging
 from datetime import datetime, date, timedelta
+import httpx
 from futurehouse_client.models import TaskRequest, RuntimeConfig
 from futurehouse_client import FutureHouseClient, JobNames
 
@@ -80,6 +81,74 @@ app.add_middleware(
 # Mount static files if directory exists
 if os.path.exists("static"):
     app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Keep-alive configuration
+KEEP_ALIVE_INTERVAL = 45 * 60  # 45 minutes in seconds (5 minutes before Render shuts down)
+RENDER_APP_URL = os.getenv("RENDER_APP_URL", "https://ieb-chatbot.onrender.com")  # Set your Render URL
+
+class KeepAliveManager:
+    def __init__(self):
+        self.is_running = False
+        self.last_ping_time = None
+        self.ping_count = 0
+        self.failed_pings = 0
+        
+    async def start_keep_alive(self):
+        """Start the keep-alive background task"""
+        if not self.is_running:
+            self.is_running = True
+            asyncio.create_task(self._keep_alive_loop())
+            logger.info(f"🔄 Keep-alive started - will ping every {KEEP_ALIVE_INTERVAL/60:.1f} minutes")
+    
+    async def _keep_alive_loop(self):
+        """Background loop to keep the server alive"""
+        while self.is_running:
+            try:
+                await asyncio.sleep(KEEP_ALIVE_INTERVAL)
+                await self._ping_self()
+            except Exception as e:
+                logger.error(f"❌ Keep-alive loop error: {e}")
+                await asyncio.sleep(60)  # Wait 1 minute before retrying
+    
+    async def _ping_self(self):
+        """Ping the server to keep it alive"""
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                start_time = time.time()
+                response = await client.get(f"{RENDER_APP_URL}/health")
+                ping_time = time.time() - start_time
+                
+                if response.status_code == 200:
+                    self.ping_count += 1
+                    self.last_ping_time = datetime.now()
+                    self.failed_pings = 0
+                    logger.info(f"✅ Keep-alive ping #{self.ping_count} successful ({ping_time:.2f}s)")
+                else:
+                    self.failed_pings += 1
+                    logger.warning(f"⚠️ Keep-alive ping failed with status {response.status_code}")
+                    
+        except Exception as e:
+            self.failed_pings += 1
+            logger.error(f"❌ Keep-alive ping failed: {e}")
+    
+    def get_status(self):
+        """Get keep-alive status"""
+        return {
+            "is_running": self.is_running,
+            "ping_count": self.ping_count,
+            "failed_pings": self.failed_pings,
+            "last_ping_time": self.last_ping_time.isoformat() if self.last_ping_time else None,
+            "next_ping_in_seconds": KEEP_ALIVE_INTERVAL if self.is_running else None,
+            "ping_interval_minutes": KEEP_ALIVE_INTERVAL / 60
+        }
+    
+    def stop(self):
+        """Stop the keep-alive mechanism"""
+        self.is_running = False
+        logger.info("🛑 Keep-alive stopped")
+
+# Initialize keep-alive manager
+keep_alive_manager = KeepAliveManager()
 
 # Add explicit preflight handler
 @app.options("/{full_path:path}")
@@ -380,9 +449,13 @@ async def startup_event():
     logger.info("🚀 Medical Chatbot Backend started successfully!")
     status = api_manager.get_status()
     logger.info(f"📊 Status: Available APIs={status['available_api_keys']}/{status['total_api_keys']}, Total Requests={status['total_requests_made']}")
+    
+    # Start keep-alive mechanism
+    await keep_alive_manager.start_keep_alive()
 
 @app.on_event("shutdown") 
 async def shutdown_event():
+    keep_alive_manager.stop()
     for client in api_manager.clients.values():
         try:
             client.close()
@@ -453,12 +526,31 @@ def smart_chunk_text(text: str, chunk_size: int = 50):
 @app.get("/health")
 async def health_check():
     status = api_manager.get_status()
+    keep_alive_status = keep_alive_manager.get_status()
     logger.info(f"🏥 Health check - Available: {status['available_api_keys']}/{status['total_api_keys']}")
     return {
         "status": "healthy",
         "timestamp": time.time(),
-        "api_manager_status": status
+        "api_manager_status": status,
+        "keep_alive_status": keep_alive_status
     }
+
+@app.get("/keep-alive-status")
+async def get_keep_alive_status():
+    """Get keep-alive status"""
+    return keep_alive_manager.get_status()
+
+@app.post("/start-keep-alive")
+async def start_keep_alive():
+    """Manually start keep-alive"""
+    await keep_alive_manager.start_keep_alive()
+    return {"message": "Keep-alive started", "status": keep_alive_manager.get_status()}
+
+@app.post("/stop-keep-alive")
+async def stop_keep_alive():
+    """Manually stop keep-alive"""
+    keep_alive_manager.stop()
+    return {"message": "Keep-alive stopped", "status": keep_alive_manager.get_status()}
 
 @app.get("/api-status")
 async def detailed_api_status():
@@ -611,14 +703,3 @@ async def get_counter_file_content():
         }
     except Exception as e:
         logger.error(f"❌ Error getting API data: {e}")
-        return {"error": str(e)}
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(
-        app,
-        host="0.0.0.0", 
-        port=8000,
-        reload=True,
-        log_level="info"
-    )
