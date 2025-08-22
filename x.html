@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agents for Scientific Discovery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: #111111;
+            border-right: 1px solid #2a2a2a;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 30px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .logo-icon {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+        }
+
+        .nav-section {
+            margin-bottom: 30px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 4px;
+            color: #9ca3af;
+            font-size: 14px;
+        }
+
+        .nav-item:hover {
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+
+        .nav-item.active {
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+
+        .nav-icon {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .recent-tasks {
+            flex: 1;
+        }
+
+        .recent-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .recent-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #9ca3af;
+        }
+
+        .view-all {
+            color: #3b82f6;
+            font-size: 12px;
+            text-decoration: none;
+        }
+
+        .task-item {
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            font-size: 13px;
+            color: #d1d5db;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .task-item:hover {
+            background: #1a1a1a;
+        }
+
+        .task-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            flex-shrink: 0;
+        }
+
+        .user-section {
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid #2a2a2a;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .user-info:hover {
+            background: #1a1a1a;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #ef4444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .content-header {
+            text-align: center;
+            padding: 60px 40px 40px;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .main-title {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #ffffff, #9ca3af);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .main-title .highlight {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: #9ca3af;
+            font-weight: 400;
+        }
+
+        .agents-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            padding: 40px;
+            max-width: 1000px;
+            margin: 0 auto;
+            flex: 1;
+        }
+
+        .agent-card {
+            background: #111111;
+            border: 1px solid #2a2a2a;
+            border-radius: 16px;
+            padding: 32px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .agent-card:hover {
+            transform: translateY(-4px);
+            border-color: #3b82f6;
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.1);
+        }
+
+        .agent-card.selected {
+            border-color: #3b82f6;
+            background: linear-gradient(135deg, #111111, #1a1a1a);
+        }
+
+        .agent-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .agent-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .agent-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .agent-type {
+            color: #3b82f6;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .agent-description {
+            color: #9ca3af;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .experimental-badge {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: #ef4444;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .chat-section {
+            background: #0f0f0f;
+            border-top: 1px solid #2a2a2a;
+            padding: 24px 40px;
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .chat-container {
+            background: #111111;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            min-height: 200px;
+        }
+
+        .chat-messages {
+            padding: 20px;
+        }
+
+        .message {
+            margin-bottom: 16px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message.bot {
+            text-align: left;
+        }
+
+        .message-content {
+            display: inline-block;
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            word-wrap: break-word;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        .message.user .message-content {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .message.bot .message-content {
+            background: #1a1a1a;
+            color: #e5e7eb;
+            border: 1px solid #374151;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        .chat-input {
+            width: 100%;
+            background: #1a1a1a;
+            border: 1px solid #374151;
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: #ffffff;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 44px;
+            font-family: inherit;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .chat-input::placeholder {
+            color: #6b7280;
+        }
+
+        .send-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+        }
+
+        .send-button:hover:not(:disabled) {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-container {
+            display: none;
+            background: #1a1a1a;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #374151;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            width: 0%;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        .progress-text {
+            color: #9ca3af;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .status-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #1a1a1a;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding: 0 20px;
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #6b7280;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #6b7280;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .notification {
+            background: #1a1a1a;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .notification.fallback {
+            border-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }
+
+        .notification.error {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Enhanced message formatting */
+        .message-content h1, .message-content h2, .message-content h3 {
+            margin: 12px 0 8px 0;
+            font-weight: 600;
+        }
+
+        .message-content h1 { font-size: 1.1em; color: #ffffff; }
+        .message-content h2 { font-size: 1.05em; color: #e5e7eb; }
+        .message-content h3 { font-size: 1em; color: #d1d5db; }
+
+        .message-content ul, .message-content ol {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        .message-content li {
+            margin: 4px 0;
+            color: #d1d5db;
+        }
+
+        .message-content p {
+            margin: 8px 0;
+            color: #e5e7eb;
+        }
+
+        .message-content strong {
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .message-content em {
+            font-style: italic;
+            color: #9ca3af;
+        }
+
+        .message-content code {
+            background: #374151;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 0.85em;
+            color: #fbbf24;
+        }
+
+        .citation {
+            color: #3b82f6;
+            font-size: 0.8em;
+            background: rgba(59, 130, 246, 0.1);
+            padding: 2px 4px;
+            border-radius: 3px;
+            margin: 0 2px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .streaming-text {
+            display: inline;
+        }
+
+        .cursor {
+            animation: blink 1s infinite;
+            color: #3b82f6;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+                max-height: 40vh;
+            }
+            
+            .agents-grid {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            }
+            
+            .content-header {
+                padding: 40px 20px 20px;
+            }
+            
+            .main-title {
+                font-size: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">
+            <div class="logo-icon">⚡</div>
+            Platform
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-item active">
+                <div class="nav-icon">≡</div>
+                New Task +
+            </div>
+            <div class="nav-item">
+                <div class="nav-icon">📁</div>
+                Projects
+            </div>
+        </div>
+
+        <div class="recent-tasks">
+            <div class="recent-header">
+                <div class="recent-title">Recent Tasks</div>
+                <a href="#" class="view-all">view all</a>
+            </div>
+            
+            <div class="task-item">
+                <div class="task-status"></div>
+                Bird species count inquiry...
+            </div>
+            <div class="task-item">
+                <div class="task-status"></div>
+                One moon.
+            </div>
+            <div class="task-item">
+                <div class="task-status"></div>
+                Greatest water solubility...
+            </div>
+            <div class="task-item">
+                <div class="task-status"></div>
+                Human or NHP testing c...
+            </div>
+            <div class="task-item">
+                <div class="task-status"></div>
+                Human or NHP exerkine...
+            </div>
+            <div class="task-item">
+                <div class="task-status"></div>
+                Liver infection caused b...
+            </div>
+        </div>
+
+        <div class="nav-section" style="margin-top: auto; padding-top: 20px; border-top: 1px solid #2a2a2a;">
+            <div class="nav-item">
+                <div class="nav-icon">🔧</div>
+                API
+            </div>
+            <div class="nav-item">
+                <div class="nav-icon">📊</div>
+                Models
+            </div>
+            <div class="nav-item">
+                <div class="nav-icon">💬</div>
+                Feedback
+            </div>
+            <div class="nav-item">
+                <div class="nav-icon">⚙️</div>
+                Settings
+            </div>
+        </div>
+
+        <div class="user-section">
+            <div class="user-info">
+                <div class="user-avatar">A</div>
+                <div>
+                    <div style="font-size: 14px; font-weight: 500;">aditya.kumar...</div>
+                </div>
+                <div style="margin-left: auto; color: #6b7280;">⌄</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="content-header">
+            <h1 class="main-title">AI Agents for <span class="highlight">Scientific</span> Discovery</h1>
+            <p class="subtitle">Automate your research workflows. Try one to get started:</p>
+        </div>
+
+        <div class="agents-grid">
+            <div class="agent-card" data-job="CROW">
+                <div class="agent-icon">🐦</div>
+                <div class="agent-header">
+                    <!-- <div class="agent-name">Crow</div> -->
+                    <div class="agent-type">Concise Search</div>
+                </div>
+                <div class="agent-description">
+                    Produces a succinct answer citing scientific data sources, good for API calls and specific questions. Built with PaperQA2.
+                </div>
+            </div>
+
+            <div class="agent-card" data-job="FALCON">
+                <div class="agent-icon">🦅</div>
+                <div class="agent-header">
+                    <!-- <div class="agent-name">Falcon</div> -->
+                    <div class="agent-type">Deep Search</div>
+                </div>
+                <div class="agent-description">
+                    Produces a long report with many sources, good for literature reviews and evaluating hypotheses.
+                </div>
+            </div>
+
+            <div class="agent-card" data-job="PHOENIX">
+                <div class="agent-icon">🔥</div>
+                <div class="agent-header">
+                    <!-- <div class="agent-name">Phoenix</div> -->
+                    <div class="agent-type">Chemistry Tasks</div>
+                </div>
+                <div class="agent-description">
+                    A new iteration of ChemCrow. Phoenix uses cheminformatics tools to do chemistry. Good for planning synthesis and designing new molecules.
+                </div>
+                <div class="experimental-badge">Experimental</div>
+            </div>
+
+            <div class="agent-card" data-job="OWL">
+                <div class="agent-icon">🦉</div>
+                <div class="agent-header">
+                    <!-- <div class="agent-name">Owl</div> -->
+                    <div class="agent-type">Precedent Search</div>
+                </div>
+                <div class="agent-description">
+                    Formerly known as HasAnyone, good for understanding if anyone has ever done something in science.
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-section">
+            <div class="chat-container" id="chatContainer">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="empty-state">
+                        <div class="empty-icon">💬</div>
+                        <div>Select an AI agent above and start your research conversation</div>
+                    </div>
+                </div>
+                
+                <div class="typing-indicator" id="typingIndicator">
+                    <span id="typingText">Analyzing your query</span>
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">Processing your request...</div>
+            </div>
+
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea id="userInput" class="chat-input" placeholder="Ask me anything about your research..." rows="2"></textarea>
+                </div>
+                <button onclick="sendMessage()" id="sendButton" class="send-button">Send</button>
+            </div>
+        </div>
+
+        <div class="status-indicator" id="statusIndicator">
+            Ready
+        </div>
+    </div>
+
+    <script>
+        let selectedAgent = 'CROW';
+        let continuedJobId = null;
+        let currentStreamingMessage = null;
+        let queryStartTime = null;
+        let timerInterval = null;
+        const BACKEND_URL = "http://localhost:8000";
+
+        const agentDescriptions = {
+            'CROW': 'Quick and concise responses for general queries',
+            'FALCON': 'Deep, comprehensive analysis and research',
+            'PHOENIX': 'Specialized chemistry and scientific tasks',
+            'OWL': 'Legal precedent research and analysis'
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up agent selection
+            document.querySelectorAll('.agent-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    // Remove previous selection
+                    document.querySelectorAll('.agent-card').forEach(c => c.classList.remove('selected'));
+                    
+                    // Select current card
+                    this.classList.add('selected');
+                    selectedAgent = this.getAttribute('data-job');
+                    
+                    // Clear empty state if exists
+                    const emptyState = document.querySelector('.empty-state');
+                    if (emptyState) {
+                        emptyState.style.display = 'none';
+                    }
+                    
+                    // Add welcome message for selected agent
+                    if (document.querySelectorAll('.message').length === 0) {
+                        addMessage('bot', `👋 You've selected ${selectedAgent}. ${agentDescriptions[selectedAgent]} What would you like to research?`);
+                    }
+                });
+            });
+
+            // Auto-select first agent
+            document.querySelector('.agent-card[data-job="CROW"]').click();
+
+            // Focus on input
+            document.getElementById('userInput').focus();
+        });
+
+        function addMessage(sender, content, isStreaming = false) {
+            const chatMessages = document.getElementById('chatMessages');
+            
+            // Hide empty state
+            const emptyState = document.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.style.display = 'none';
+            }
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            if (isStreaming) {
+                contentDiv.innerHTML = '<span class="streaming-text"></span><span class="cursor">|</span>';
+                currentStreamingMessage = contentDiv.querySelector('.streaming-text');
+            } else {
+                contentDiv.innerHTML = formatStructuredContent(content);
+            }
+            
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+            
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            return messageDiv;
+        }
+
+        function formatStructuredContent(text) {
+            if (typeof text !== 'string') return text;
+            
+            let formatted = text
+                .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+                .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+                .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/`(.*?)`/g, '<code>$1</code>')
+                .replace(/^\s*[-*+]\s+(.+)$/gm, '<li>$1</li>')
+                .replace(/^\s*\d+\.\s+(.+)$/gm, '<li>$1</li>')
+                .replace(/\[(\d+)\]/g, '<span class="citation">[$1]</span>')
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/^(?!<[hl]|<li)(.+)$/gm, '<p>$1</p>');
+            
+            formatted = formatted.replace(/(<li>.*?<\/li>(?:\s*<li>.*?<\/li>)*)/gs, '<ul>$1</ul>');
+            
+            formatted = formatted
+                .replace(/<p><\/p>/g, '')
+                .replace(/<p>(<h[1-6]>)/g, '$1')
+                .replace(/(<\/h[1-6]>)<\/p>/g, '$1')
+                .replace(/<p>(<ul>)/g, '$1')
+                .replace(/(<\/ul>)<\/p>/g, '$1');
+            
+            return formatted;
+        }
+
+        function appendStreamingText(text) {
+            if (!currentStreamingMessage) return;
+            
+            const existingHTML = currentStreamingMessage.innerHTML;
+            const newContent = existingHTML + text;
+            currentStreamingMessage.innerHTML = formatStructuredContent(newContent);
+            
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function updateStatus(message) {
+            document.getElementById('statusIndicator').textContent = message;
+        }
+
+        function showProgress(show, progress = 0, text = 'Processing your request...') {
+            const container = document.getElementById('progressContainer');
+            const fill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            if (show) {
+                container.style.display = 'block';
+                fill.style.width = progress + '%';
+                progressText.textContent = text;
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
+        function showTyping(show, text = 'Analyzing your query') {
+            const indicator = document.getElementById('typingIndicator');
+            const typingText = document.getElementById('typingText');
+            indicator.style.display = show ? 'flex' : 'none';
+            if (show) {
+                typingText.textContent = text;
+            }
+        }
+
+        function showNotification(type, message) {
+            const chatMessages = document.getElementById('chatMessages');
+            const notificationDiv = document.createElement('div');
+            notificationDiv.className = `notification ${type}`;
+            
+            const icon = type === 'fallback' ? '🔄' : type === 'error' ? '❌' : 'ℹ️';
+            notificationDiv.innerHTML = `${icon} ${message}`;
+            
+            chatMessages.appendChild(notificationDiv);
+            
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.scrollTop = chatContainer.scroll
+        }

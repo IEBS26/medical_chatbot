@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Chatbot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #161616 0%, #2c2c2d 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #202020, #242424);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .timer {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .chat-container {
+            height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message.bot {
+            text-align: left;
+        }
+
+        .message-content {
+            display: inline-block;
+            max-width: 80%;
+            padding: 12px 18px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #000000, #2a2a2b);
+            color: white;
+        }
+
+        .message.bot .message-content {
+            background: white;
+            color: #374151;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+        }
+
+        .input-section {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .select-wrapper {
+            position: relative;
+            flex: 1;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 1rem;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 12px center;
+            background-repeat: no-repeat;
+            background-size: 16px;
+            padding-right: 40px;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #040404;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            flex: 2;
+        }
+
+        textarea {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 50px;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #2c2c2d;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #000000, #2c2c2d);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 100px;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-container {
+            margin: 20px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #161616, #2c2c2d);
+            width: 0%;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 5px;
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #9ca3af;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .job-info {
+            background: #f1f5f9;
+            border-left: 4px solid #000000;
+            padding: 10px 15px;
+            margin: 10px 20px;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.9rem;
+            color: #475569;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            color: #310000;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 20px;
+        }
+
+        .api-key-section {
+            background: #fffbeb;
+            border: 1px solid #fed7aa;
+            padding: 15px 20px;
+            margin: 20px;
+            border-radius: 10px;
+        }
+
+        .api-key-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-top: 10px;
+        }
+
+        .streaming-text {
+            display: inline;
+        }
+
+        .cursor {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* Citation and reference styling */
+        .citation {
+            color: #3b82f6;
+            font-size: 0.95em;
+            background: #eff6ff;
+            padding: 1px 3px;
+            border-radius: 3px;
+            margin: 0 1px;
+            border: 1px solid #dbeafe;
+            font-weight: 500;
+        }
+
+        .references {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 2px solid #e5e7eb;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .references h3 {
+            color: #1f2937;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .reference-item {
+            margin-bottom: 8px;
+            color: #4b5563;
+        }
+
+        .reference-number {
+            color: #3b82f6;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+
+        .fallback-notice {
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            color: #92400e;
+            padding: 10px 15px;
+            margin: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .input-row {
+                flex-direction: column;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .timer {
+                position: static;
+                margin-top: 10px;
+                display: inline-block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+           <div class="timer" id="timer">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+    <path d="M12 1a1 1 0 0 0-1 1v2H9a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2h-2V2a1 1 0 0 0-1-1Zm0 6a7 7 0 1 0 0 14 7 7 0 0 0 0-14Zm0-2a9 9 0 1 1 0 18 9 9 0 0 1 0-18Zm0 4a1 1 0 0 1 1 1v3.586l2.707 2.707a1 1 0 1 1-1.414 1.414L12 14.414V10a1 1 0 0 1 1-1Z"/>
+  </svg>
+  Timer
+</div>
+            <h1>🚀 Medical chatbot</h1>
+            <p>Context-aware AI assistant with multiple search capabilities</p>
+        </div>
+        <div class="chat-container" id="chatContainer">
+            <div class="message bot">
+                <div class="message-content">👋 Welcome to Medical chatbot! 
+    Select a search type and ask me anything.
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">Processing your request...</div>
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            <span>Analyzing your query</span>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+        </div>
+
+        <div class="input-section">
+            <div class="input-row">
+                <div class="select-wrapper">
+                    <select id="jobSelect">
+                        <option value="CROW">🔍 Concise Search</option>
+                        <option value="FALCON">🕵️ Deep Search</option>
+                        <option value="PHOENIX">🧪 Chemistry Tasks</option>
+                        <option value="OWL">⚖️ Precedent Tasks</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <textarea id="userInput" placeholder="Ask me anything..." rows="2"></textarea>
+                    <button onclick="sendMessage()" id="sendButton">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let apiKey = ""; // Not needed anymore - backend handles API key
+        let continuedJobId = null;
+        let currentStreamingMessage = null;
+        let streamingContent = ""; // Store complete content
+        let queryStartTime = null;
+        let timerInterval = null;
+        const BACKEND_URL = "http://localhost:8000"; // Change this to your backend URL
+
+        const jobDescriptions = {
+            'CROW': 'Quick and concise responses for general queries',
+            'FALCON': 'Deep, comprehensive analysis and research',
+            'PHOENIX': 'Specialized chemistry and scientific tasks',
+            'OWL': 'Legal precedent research and analysis'
+        };
+
+        function addMessage(sender, content, isStreaming = false) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            if (isStreaming) {
+                streamingContent = ""; // Reset streaming content
+                contentDiv.innerHTML = '<span class="streaming-text"></span><span class="cursor">|</span>';
+                currentStreamingMessage = contentDiv;
+            } else {
+                // Format structured content while preserving citations
+                contentDiv.innerHTML = formatStructuredContent(content);
+            }
+            
+            messageDiv.appendChild(contentDiv);
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            return messageDiv;
+        }
+
+        function formatStructuredContent(text) {
+            if (typeof text !== 'string') return text;
+            
+            // First, protect citations and references from being modified
+            let formatted = text;
+            
+            // Split into main content and references section
+            const referencesIndex = formatted.lastIndexOf('References');
+            let mainContent = formatted;
+            let referencesSection = '';
+            
+            if (referencesIndex !== -1) {
+                mainContent = formatted.substring(0, referencesIndex).trim();
+                referencesSection = formatted.substring(referencesIndex).trim();
+            }
+            
+            // Process main content - preserve exact citations format
+            mainContent = mainContent
+                // Style parenthetical citations like (han2023treatmentoutcomesand pages 1-2)
+                .replace(/\(([a-zA-Z0-9_\-]+\s+pages\s+[\d\-,\s]+)\)/g, '<span class="citation">($1)</span>')
+                // Style NCT citations like (NCT02095639)
+                .replace(/\(NCT\d+\)/g, '<span class="citation">$&</span>')
+                // Style Clinical Trial citations
+                .replace(/\(Clinical Trial Search: [a-zA-Z0-9]+\)/g, '<span class="citation">$&</span>');
+            
+            // Process references section if it exists
+            if (referencesSection) {
+                const referenceLines = referencesSection.split('\n');
+                let processedReferences = '<div class="references"><h3>References</h3>';
+                
+                for (let line of referenceLines) {
+                    if (line.trim() === 'References') continue;
+                    if (line.trim() === '') continue;
+                    
+                    // Check if line starts with a number (reference item)
+                    const match = line.match(/^(\d+)\.\s*(.+)$/);
+                    if (match) {
+                        processedReferences += `<div class="reference-item"><span class="reference-number">${match[1]}.</span>${match[2]}</div>`;
+                    } else if (line.trim()) {
+                        // Continuation of previous reference
+                        processedReferences += `<div class="reference-item">${line.trim()}</div>`;
+                    }
+                }
+                
+                processedReferences += '</div>';
+                formatted = mainContent + processedReferences;
+            } else {
+                formatted = mainContent;
+            }
+            
+            return formatted;
+        }
+
+        function appendStreamingText(text) {
+            if (!currentStreamingMessage) return;
+            
+            // Add new text to streaming content
+            streamingContent += text;
+            
+            // Update the display with properly formatted content
+            const streamingTextElement = currentStreamingMessage.querySelector('.streaming-text');
+            if (streamingTextElement) {
+                // For streaming, we just append the raw text without heavy formatting
+                // to avoid breaking citations mid-stream
+                streamingTextElement.textContent = streamingContent;
+            }
+            
+            // Scroll to bottom
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function finalizeStreamingMessage() {
+            if (!currentStreamingMessage) return;
+            
+            // Remove cursor
+            const cursor = currentStreamingMessage.querySelector('.cursor');
+            if (cursor) cursor.remove();
+            
+            // Apply final formatting to complete content
+            currentStreamingMessage.innerHTML = formatStructuredContent(streamingContent);
+            
+            // Reset streaming variables
+            currentStreamingMessage = null;
+            streamingContent = "";
+        }
+
+        function startTimer() {
+            const timerEl = document.getElementById("timer");
+            queryStartTime = Date.now();
+            timerEl.textContent = "⏱️ Waiting: 0s";
+
+            // Update every second
+            timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - queryStartTime) / 1000);
+                timerEl.textContent = `⏱️ Waiting: ${elapsed}s`;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            const timerEl = document.getElementById("timer");
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            // Show final wait time
+            if (queryStartTime) {
+                const elapsed = Math.floor((Date.now() - queryStartTime) / 1000);
+                timerEl.textContent = `✅ Responded in ${elapsed}s`;
+                // Reset to ready after 3 seconds
+                setTimeout(() => {
+                    timerEl.textContent = "Ready";
+                }, 3000);
+            }
+        }
+
+        function showProgress(show, progress = 0, text = 'Processing your request...') {
+            const container = document.getElementById('progressContainer');
+            const fill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            if (show) {
+                container.style.display = 'block';
+                fill.style.width = progress + '%';
+                progressText.textContent = text;
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
+        function showTyping(show) {
+            const indicator = document.getElementById('typingIndicator');
+            indicator.style.display = show ? 'flex' : 'none';
+        }
+
+        function showError(message) {
+            const chatContainer = document.getElementById('chatContainer');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = `❌ Error: ${message}`;
+            chatContainer.appendChild(errorDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function showFallbackNotice(message) {
+            const chatContainer = document.getElementById('chatContainer');
+            const noticeDiv = document.createElement('div');
+            noticeDiv.className = 'fallback-notice';
+            noticeDiv.textContent = `🔄 ${message}`;
+            chatContainer.appendChild(noticeDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function showJobInfo(jobName) {
+            const chatContainer = document.getElementById('chatContainer');
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'job-info';
+            infoDiv.textContent = jobDescriptions[jobName];
+            chatContainer.appendChild(infoDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        async function sendMessage() {
+            const userInput = document.getElementById('userInput');
+            const jobSelect = document.getElementById('jobSelect');
+            const sendButton = document.getElementById('sendButton');
+            const query = userInput.value.trim();
+             if (!query) return;
+             const selectedJob = jobSelect.value;
+            
+            // Add user message
+            addMessage('user', query);
+            showJobInfo(selectedJob);
+            startTimer();
+            
+            // Clear input and disable button
+            userInput.value = '';
+            sendButton.disabled = true;
+            sendButton.textContent = 'Processing...';
+            
+            // Show progress
+            showProgress(true, 10, 'Initializing request...');
+            
+            try {
+                // Simulate API call with progress updates
+                await simulateProgress();
+                
+                // Prepare request data
+                const taskData = {
+                    name: `JobNames.${selectedJob}`,
+                    query: query,
+                    runtime_config: continuedJobId ? { continued_job_id: continuedJobId } : null
+                };
+                
+                // Make API call through backend with fallback
+                const response = await realApiCallWithFallback(taskData);
+                
+            } catch (error) {
+                showProgress(false);
+                showTyping(false);
+                stopTimer();
+                showError(error.message);
+            } finally {
+                sendButton.disabled = false;
+                sendButton.textContent = 'Send';
+            }
+        }
+
+        async function simulateProgress() {
+            const progressSteps = [20, 40, 60];
+            const progressTexts = [
+                'Connecting to AI Agent...',
+                'Analyzing your query...',
+                'Generating your answer...'
+            ];
+            
+            for (let i = 0; i < progressSteps.length; i++) {
+                showProgress(true, progressSteps[i], progressTexts[i]);
+                await new Promise(resolve => setTimeout(resolve, 800));
+            }
+        }
+
+        // Enhanced API call with fallback mechanism
+        async function realApiCallWithFallback(taskData) {
+            const maxAttempts = 10;
+            let attempt = 0;
+            
+            while (attempt < maxAttempts) {
+                try {
+                    const response = await fetch(`${BACKEND_URL}/chat/stream`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            query: taskData.query,
+                            job_type: taskData.name.replace('JobNames.', ''),
+                            continued_job_id: taskData.runtime_config?.continued_job_id || null,
+                            attempt: attempt
+                        })
+                    });
+                    
+                    if (response.status === 429) {
+                        attempt++;
+                        if (attempt < maxAttempts) {
+                            showFallbackNotice(`Rate limit reached. Trying alternative provider... (Attempt ${attempt + 1}/${maxAttempts})`);
+                            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+                            continue;
+                        } else {
+                            throw new Error("All API providers are rate limited. Please try again later.");
+                        }
+                    }
+                    
+                    if (!response.ok) {
+                        throw new Error(`Backend Error: ${response.status} ${response.statusText}`);
+                    }
+                    
+                    // Handle streaming response
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = '';
+                    let finalResult = null;
+                    
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop() || '';
+                        
+                        for (const line of lines) {
+                            if (line.startsWith('data: ')) {
+                                try {
+                                    const data = JSON.parse(line.slice(6));
+                                    await handleStreamData(data);
+                                    
+                                    if (data.type === 'complete') {
+                                        finalResult = {
+                                            formatted_answer: '', // Will be built by streaming
+                                            task_id: data.data.task_id
+                                        };
+                                    }
+                                } catch (e) {
+                                    console.error('Error parsing stream data:', e);
+                                }
+                            }
+                        }
+                    }
+                    
+                    return finalResult || { formatted_answer: 'Response completed', task_id: 'unknown' };
+                    
+                } catch (error) {
+                    if (error.message.includes('rate limit') || error.message.includes('429')) {
+                        attempt++;
+                        if (attempt < maxAttempts) {
+                            showFallbackNotice(`Rate limit encountered. Switching to backup provider... (Attempt ${attempt + 1}/${maxAttempts})`);
+                            await new Promise(resolve => setTimeout(resolve, 2000));
+                            continue;
+                        }
+                    }
+                    throw error;
+                }
+            }
+        }
+
+        async function handleStreamData(data) {
+            switch (data.type) {
+                case 'progress':
+                    showProgress(true, data.data.progress, data.data.message);
+                    break;
+                    
+                case 'answer_start':
+                    showProgress(false);
+                    showTyping(false);
+                    // Create streaming message
+                    addMessage('bot', '', true);
+                    stopTimer();
+                    break;
+                    
+                case 'answer_chunk':
+                    if (currentStreamingMessage) {
+                        appendStreamingText(data.data.text);
+                    }
+                    break;
+                    
+                case 'complete':
+                    finalizeStreamingMessage();
+                    continuedJobId = data.data.task_id;
+                    break;
+                    
+                case 'fallback':
+                    showFallbackNotice(data.data.message);
+                    break;
+                    
+                case 'error':
+                    showProgress(false);
+                    showTyping(false);
+                    stopTimer();
+                    showError(data.data.message);
+                    break;
+            }
+        }
+
+        // Handle Enter key in textarea
+        document.getElementById('userInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Focus on user input when page loads
+        window.addEventListener('load', function() {
+            document.getElementById('userInput').focus();
+        });
+    </script>
+</body>
+</html>
